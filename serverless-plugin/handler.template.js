@@ -10,11 +10,9 @@ function wrapper(options) {
         process.env['PATH'] = process.env['PATH'] + ':' +
             process.env['LAMBDA_TASK_ROOT'];
 
-        // Keep track of the output result
-        let output = '';
-        const server = net.createServer(function(socket) {
-            socket.on('data', chunk => output += chunk);
-        });
+        const server = net.createServer();
+
+        const connection = new Promise(resolve => server.on('connection', resolve));
 
         const address = await new Promise(
             resolve =>
@@ -30,6 +28,12 @@ function wrapper(options) {
 
         // Send the event to the process
         stdin.end(JSON.stringify(event) + '\n', 'utf8');
+
+        const socket = await connection;
+
+        // Keep track of the output result
+        let output = '';
+        socket.on('data', chunk => output += chunk);
 
         let exited = false;
 
