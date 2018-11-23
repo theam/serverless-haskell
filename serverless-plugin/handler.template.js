@@ -35,35 +35,31 @@ function wrapper(options) {
         let output = '';
         socket.on('data', chunk => output += chunk);
 
-        // Wait for the process to close the socket
-        await new Promise(resolve => socket.on('end', resolve));
-
-        let exited = false;
-
+        // Wait for the process to exit or close the socket, whichever happens
+        // first
         return await new Promise((resolve, reject) => {
+            function resolveWithOutput() {
+                try {
+                    const result = JSON.parse(output);
+                    resolve(result);
+                } catch (err) {
+                    reject('child process output bad JSON: ' + output);
+                }
+            }
+
+            socket.on('end', resolveWithOutput);
 
             main.on('exit', function (code) {
-                if (!exited) {
-                    exited = true;
-                    if (code == 0) {
-                        try {
-                            const result = JSON.parse(output);
-                            resolve(result);
-                        } catch (err) {
-                            reject('child process output bad JSON: ' + output);
-                        }
-                    }
-                    else {
-                        reject('child process exited with code ' + code);
-                    }
+                if (code == 0) {
+                    resolveWithOutput();
+                }
+                else {
+                    reject('child process exited with code ' + code);
                 }
             });
 
             main.on('error', function (err) {
-                if (!exited) {
-                    exited = true;
-                    reject(err, 'child process exited with error: ' + err);
-                }
+                reject(err, 'child process exited with error: ' + err);
             });
         });
     };
