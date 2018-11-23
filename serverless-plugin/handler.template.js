@@ -35,6 +35,9 @@ function wrapper(options) {
         let output = '';
         socket.on('data', chunk => output += chunk);
 
+        // Wait for the process to close the socket
+        await new Promise(resolve => socket.on('end', resolve));
+
         let exited = false;
 
         return await new Promise((resolve, reject) => {
