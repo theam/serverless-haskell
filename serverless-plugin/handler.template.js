@@ -57,7 +57,10 @@ function wrapper(options) {
             main.on('exit', function (code) {
                 if (code == 0) {
                     console.log("Main exit.");
-                    resolveWithOutput();
+                    // If the "main exit" was received before "socket closed",
+                    // wait for a while before resolving, since the data sent
+                    // over the socket might not have arrived yet either.
+                    setTimeout(resolveWithOutput, 100);
                 }
                 else {
                     reject('child process exited with code ' + code);
