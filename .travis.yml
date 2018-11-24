@@ -14,26 +14,6 @@ cache:
 
 matrix:
   include:
-  # The Stack builds. We can pass in arbitrary Stack arguments via the ARGS
-  # variable, such as using --stack-yaml to point to a different file.
-  - env: BUILD=stack ARGS=""
-    compiler: ": #stack default"
-
-  - env: BUILD=stack ARGS="--resolver lts-9 --stack-yaml stack-travis.yaml"
-    compiler: ": #stack LTS 9"
-
-  - env: BUILD=stack ARGS="--resolver lts-10 --stack-yaml stack-travis.yaml"
-    compiler: ": #stack LTS 10"
-
-  - env: BUILD=stack ARGS="--resolver lts-11"
-    compiler: ": #stack LTS 11"
-
-  - env: BUILD=stack ARGS="--resolver lts-12"
-    compiler: ": #stack LTS 12"
-
-  - env: BUILD=npm
-    compiler: ": #npm"
-
   - env: BUILD=integration RESOLVER_SERIES=lts-9
     compiler: ": #integration LTS 9"
 
