@@ -33,7 +33,12 @@ function wrapper(options) {
 
         // Keep track of the output result
         let output = '';
-        socket.on('data', chunk => output += chunk);
+        socket.on('data', chunk => {
+            output += chunk;
+            console.log("Chunk received.");
+        });
+
+        socket.on('end', () => console.log("Socket end."));
 
         // Wait for the process to exit or close the socket, whichever happens
         // first
@@ -51,6 +56,7 @@ function wrapper(options) {
 
             main.on('exit', function (code) {
                 if (code == 0) {
+                    console.log("Main exit.");
                     resolveWithOutput();
                 }
                 else {

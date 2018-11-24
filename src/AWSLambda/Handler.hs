@@ -107,7 +107,9 @@ withSendResult act = do
       withSocketsDo $
         connect "127.0.0.1" communicationPort $ \(socket, _) -> do
           setSocketOption socket NoDelay 1
-          act (void . send socket) `finally` close socket
+          r <- act (void . send socket) `finally` close socket
+          putStrLn "Sent and socket closed."
+          pure r
     Nothing -> act $ Text.putStrLn . Text.decodeUtf8
 
 -- | Environment variable signalling the port the JavaScript wrapper is
