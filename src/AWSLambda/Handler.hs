@@ -24,7 +24,8 @@ import qualified Data.Text.IO              as Text
 import           GHC.IO.Handle             (BufferMode (..), hSetBuffering)
 
 import           Network.Simple.TCP        (connect)
-import           Network.Socket            (close, withSocketsDo)
+import           Network.Socket            (SocketOption (..), close,
+                                            setSocketOption, withSocketsDo)
 import           Network.Socket.ByteString (send)
 
 import           System.Environment        (lookupEnv)
@@ -104,7 +105,8 @@ withSendResult act = do
     Just communicationPort -> do
       hSetBuffering stdout LineBuffering
       withSocketsDo $
-        connect "127.0.0.1" communicationPort $ \(socket, _) ->
+        connect "127.0.0.1" communicationPort $ \(socket, _) -> do
+          setSocketOption socket NoDelay 1
           act (void . send socket) `finally` close socket
     Nothing -> act $ Text.putStrLn . Text.decodeUtf8
 
