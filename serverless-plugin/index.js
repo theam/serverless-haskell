@@ -200,22 +200,6 @@ class ServerlessPlugin {
         return path.resolve(this.servicePath, directory, fileName);
     }
 
-    writeHandlers(handlerOptions) {
-        const handlerTemplate = fs.readFileSync(TEMPLATE).toString('utf8');
-
-        for (const directory in handlerOptions) {
-            for (const packageName in handlerOptions[directory]) {
-                let handler = handlerTemplate + handlerOptions[directory][packageName].map(
-                    ([executableName, options]) => `exports['${executableName}'] = wrapper(${JSON.stringify(options)});`
-                ).join("\n") + "\n";
-                const handlerFileName = this.buildHandlerFileName(directory, packageName);
-
-                fs.writeFileSync(handlerFileName, handler);
-                this.additionalFiles.push(handlerFileName);
-            }
-        }
-    }
-
     addToHandlerOptions(handlerOptions, funcName, directory, packageName, executableName) {
         // Remember the executable that needs to be handled by this package's shim
         handlerOptions[directory] = handlerOptions[directory] || {};
@@ -257,10 +241,6 @@ class ServerlessPlugin {
             ...service.package.exclude,
             ...ADDITIONAL_EXCLUDE,
         ];
-
-        // Each package will have its own wrapper; remember its options to add
-        // to the handler template
-        const handlerOptions = {};
 
         // Keep track of which extra libraries were copied
         const libraries = {};
@@ -345,8 +325,6 @@ class ServerlessPlugin {
                 `function configuration to use this plugin.`
             );
         }
-
-        this.writeHandlers(handlerOptions);
 
         // Ensure the runtime is set to a sane value for other plugins
         if (service.provider.runtime == HASKELL_RUNTIME) {
