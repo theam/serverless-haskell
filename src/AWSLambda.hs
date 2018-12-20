@@ -98,8 +98,12 @@ binary might not have the required libraries to run on Lambda.
 module AWSLambda
   ( Handler.lambdaMain
   , module AWSLambda.Events
+  , module Aws.Lambda.Configuration
+  , module Aws.Lambda.Runtime
   ) where
 
 import qualified AWSLambda.Handler as Handler
 
 import AWSLambda.Events
+import Aws.Lambda.Configuration
+import Aws.Lambda.Runtime
