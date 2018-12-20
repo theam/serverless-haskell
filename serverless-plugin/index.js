@@ -23,10 +23,10 @@ const IGNORE_LIBRARIES = [
 const TEMPLATE = path.resolve(__dirname, 'handler.template.js');
 
 // Runtime handled by this plugin
-const HASKELL_RUNTIME = 'haskell';
+const HASKELL_RUNTIME = 'provided';
 
 // Runtime used by the wrapper
-const BASE_RUNTIME = 'nodejs8.10';
+const BASE_RUNTIME = 'provided';
 
 const SERVERLESS_DIRECTORY = '.serverless';
 
@@ -163,7 +163,7 @@ class ServerlessPlugin {
         }
     }
 
-    assertServerlessPackageVersionsMatch(directory, packageName) {
+    assertServerlessPackageVersionsMatch(directory) {
         // Check that the Haskell package version corresponds to our own
         const stackDependencies = this.runStackOutput(
             directory,
@@ -267,6 +267,9 @@ class ServerlessPlugin {
 
         let haskellFunctionsFound = false;
 
+        // We run stack clean, so the TemplateHaskell gets regenerated in case it is outdated
+        this.runStack("", ['clean']);
+
         this.deployedFunctions().forEach(funcName => {
             const func = service.getFunction(funcName);
 
@@ -282,19 +285,20 @@ class ServerlessPlugin {
             const matches = handlerPattern.exec(func.handler);
 
             if (!matches) {
-                throw new Exception(`handler ${func.handler} was not of the form 'packageName.executableName' or 'dir1/dir2/packageName.executableName'.`);
+                throw new Exception(`handler ${func.handler} was not of the form 'ModuleName.functionName' or 'dir1/dir2/ModuleName.functionName'.`);
             }
 
-            const [_, directory, packageName, executableName] = matches;
+            const directory = "";
+            const executableName = "haskell_lambda";
 
             // Ensure package versions match
-            this.assertServerlessPackageVersionsMatch(directory, packageName);
+            this.assertServerlessPackageVersionsMatch(directory);
 
             // Ensure the executable is built
             this.serverless.cli.log(`Building handler ${funcName} with Stack...`);
             const res = this.runStack(
                 directory,
-                ['build', `${packageName}:exe:${executableName}`]
+                ['build']
             );
 
             // Copy the executable to the destination directory
@@ -310,7 +314,6 @@ class ServerlessPlugin {
             const targetPath = path.resolve(this.servicePath, targetDirectory, executableName);
             copyFileSync(executablePath, targetPath);
             this.additionalFiles.push(targetPath);
-            this.addToHandlerOptions(handlerOptions, funcName, targetDirectory, packageName, executableName);
 
             if (!options.localRun) {
                 // Copy libraries not present on AWS Lambda environment
